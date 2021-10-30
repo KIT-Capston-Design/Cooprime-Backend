@@ -3,6 +3,8 @@ import http from "http";
 import SocketIO from "socket.io";
 // import WebSocket, { WebSocketServer } from "ws";
 
+
+
 const app = express();
 
 app.set("views", __dirname + "/views");
@@ -13,13 +15,37 @@ app.use("/public", express.static(__dirname + "/public"));
 
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
-
+ 
+const oneToOneMatchingQ = [ ];
 
 wsServer.on("connection", (socket) => {
-    socket.on("join_room", (roomName) => {
-        socket.join(roomName);
-        socket.to(roomName).emit("welcome");
+
+    socket.on("random_one_to_one", () => {
+        // 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
+        // 1이상일 경우 큐에서 하나 뽑아서 씁니다.
+
+        if (oneToOneMatchingQ.length === 0) {
+            oneToOneMatchingQ.push(socket);
+        } else {
+            const matchedSocket = oneToOneMatchingQ.shift();
+            const roomName = matchedSocket.id + socket.id;
+            
+            socket.join(roomName);
+            matchedSocket.join(roomName);
+            
+            wsServer.to(roomName).emit("matched", roomName);
+
+        }
     })
+
+    socket.on("disconnect", (roomName) =>
+
+    })
+        
+    // socket.on("join_room", (roomName) => {
+    //     socket.join(roomName);
+    //     socket.to(roomName).emit("welcome");
+    // })
     socket.on("offer", (offer, roomName) => {
         socket.to(roomName).emit("offer", offer);
     })
@@ -29,8 +55,10 @@ wsServer.on("connection", (socket) => {
     socket.on("ice", (ice, roomName) => {
         socket.to(roomName).emit("ice", ice);
     })
+
 })
 
+    
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 httpServer.listen(8000, handleListen);
 
