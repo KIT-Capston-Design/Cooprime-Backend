@@ -16,43 +16,43 @@ const wsServer = SocketIO(httpServer, { cors: { origin: "*" } });
 
 const oneToOneMatchingQ = [];
 
-wsServer.on("connection", (socket) => {
-	console.log("New connection");
+wsServer.on("connection", socket => {
+  console.log("New connection");
 
-	socket.on("random_one_to_one", () => {
-		// 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
-		// 1이상일 경우 큐에서 하나 뽑아서 씁니다.
+  socket.on("random_one_to_one", () => {
+    // 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
+    // 1이상일 경우 큐에서 하나 뽑아서 씁니다.
 
-		if (oneToOneMatchingQ.length === 0) {
-			oneToOneMatchingQ.push(socket);
-		} else {
-			const matchedSocket = oneToOneMatchingQ.shift();
-			const roomName = matchedSocket.id + socket.id;
+    if (oneToOneMatchingQ.length === 0) {
+      oneToOneMatchingQ.push(socket);
+    } else {
+      const matchedSocket = oneToOneMatchingQ.shift();
+      const roomName = matchedSocket.id + socket.id;
 
-			socket.join(roomName);
-			matchedSocket.join(roomName);
+      socket.join(roomName);
+      matchedSocket.join(roomName);
 
-			wsServer.to(roomName).emit("matched", roomName);
-		}
-	});
+      wsServer.to(roomName).emit("matched", roomName);
+    }
+  });
 
-	// socket.on("disconnect", (roomName) =>
+  // socket.on("disconnect", (roomName) =>
 
-	// })
+  // })
 
-	// socket.on("join_room", (roomName) => {
-	//     socket.join(roomName);
-	//     socket.to(roomName).emit("welcome");
-	// })
-	socket.on("offer", (offer, roomName) => {
-		socket.to(roomName).emit("offer", offer);
-	});
-	socket.on("answer", (answer, roomName) => {
-		socket.to(roomName).emit("answer", answer);
-	});
-	socket.on("ice", (ice, roomName) => {
-		socket.to(roomName).emit("ice", ice);
-	});
+  socket.on("join_room", roomName => {
+    socket.join(roomName);
+    socket.to(roomName).emit("matched");
+  });
+  socket.on("offer", (offer, roomName) => {
+    socket.to(roomName).emit("offer", offer);
+  });
+  socket.on("answer", (answer, roomName) => {
+    socket.to(roomName).emit("answer", answer);
+  });
+  socket.on("ice", (ice, roomName) => {
+    socket.to(roomName).emit("ice", ice);
+  });
 });
 
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
