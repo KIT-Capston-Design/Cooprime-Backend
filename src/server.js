@@ -34,13 +34,17 @@ wsServer.on("connection", (socket) => {
 			socket.join(roomName);
 			matchedSocket.join(roomName);
 
-			console.log(`${socket.id} and ${matchedSocket.id} are matched`);
+			// console.log(`${socket.id} and ${matchedSocket.id} are matched`);
 			wsServer.to(roomName).emit("matched", roomName);
 		}
 	});
 
-	socket.on("disconnect", (roomName) => {
-		socket.in(roomName).disconnectSockets(true);
+	socket.on("discon", (roomName) => {
+		if (roomName !== undefined) {
+			wsServer.in(roomName).disconnectSockets(true);
+			oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+		} else {
+		}
 	});
 
 	socket.on("join_room", (roomName) => {
@@ -51,6 +55,7 @@ wsServer.on("connection", (socket) => {
 		socket.to(roomName).emit("offer", offer);
 	});
 	socket.on("answer", (answer, roomName) => {
+		console.log(roomName, answer);
 		socket.to(roomName).emit("answer", answer);
 	});
 	socket.on("ice", (ice, roomName) => {
