@@ -19,6 +19,8 @@ const oneToOneMatchingQ = [];
 wsServer.on("connection", (socket) => {
 	console.log("New connection");
 
+	socket.onAny((event) => console.log(event.type));
+
 	socket.on("random_one_to_one", () => {
 		// 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
 		// 1이상일 경우 큐에서 하나 뽑아서 씁니다.
