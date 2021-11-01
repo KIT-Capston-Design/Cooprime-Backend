@@ -19,7 +19,7 @@ const oneToOneMatchingQ = [];
 wsServer.on("connection", (socket) => {
 	console.log("New connection");
 
-	socket.onAny((event) => console.log(event.type));
+	socket.onAny((event) => console.log(event));
 
 	socket.on("random_one_to_one", () => {
 		// 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
@@ -34,13 +34,14 @@ wsServer.on("connection", (socket) => {
 			socket.join(roomName);
 			matchedSocket.join(roomName);
 
+			console.log(`${socket.id} and ${matchedSocket.id} are matched`);
 			wsServer.to(roomName).emit("matched", roomName);
 		}
 	});
 
-	// socket.on("disconnect", (roomName) =>
-
-	// })
+	socket.on("disconnect", (roomName) => {
+		socket.in(roomName).disconnectSockets(true);
+	});
 
 	socket.on("join_room", (roomName) => {
 		socket.join(roomName);
