@@ -1,3 +1,3 @@
 # Cooprime-Backend
 
-develop branch test commit
+그룹 챗 작성중
