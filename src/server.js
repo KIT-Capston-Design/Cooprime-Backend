@@ -50,6 +50,7 @@ wsServer.on("connection", (socket) => {
 				clients[0].id + clients[1].id + clients[2].id + clients[3].id;
 
 			for (let i = 0; i < clients.length; i++) {
+				clients[i].groupChatMyRoleNum = i;
 				clients[i].groupChatClients = clients;
 				clients[i].join(roomName);
 				clients[i].emit("random_group_matched", roomName, i); // i는 role 설정을 위하여 전송
@@ -76,7 +77,11 @@ wsServer.on("connection", (socket) => {
 		if (roleNum === undefined) {
 			socket.to(roomName).emit("offer", offer);
 		} else {
-			socket.groupChatClients[roleNum].emit("offer", offer);
+			socket.groupChatClients[roleNum].emit(
+				"offer",
+				offer,
+				socket.groupChatMyRoleNum
+			);
 		}
 	});
 
@@ -84,7 +89,11 @@ wsServer.on("connection", (socket) => {
 		if (roleNum === undefined) {
 			socket.to(roomName).emit("answer", answer);
 		} else {
-			socket.groupChatClients[roleNum].emit("answer", answer);
+			socket.groupChatClients[roleNum].emit(
+				"answer",
+				answer,
+				socket.groupChatMyRoleNum
+			);
 		}
 	});
 
@@ -92,7 +101,11 @@ wsServer.on("connection", (socket) => {
 		if (roleNum === undefined) {
 			socket.to(roomName).emit("ice", ice);
 		} else {
-			socket.groupChatClients[roleNum].emit("ice", ice);
+			socket.groupChatClients[roleNum].emit(
+				"ice",
+				ice,
+				socket.groupChatMyRoleNum
+			);
 		}
 	});
 });
