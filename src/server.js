@@ -15,7 +15,7 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer, { cors: { origin: "*" } });
 
 const oneToOneMatchingQ = [];
-const fourPeopleMatchingQ = [];
+const groupMatchingQ = [];
 
 wsServer.on("connection", (socket) => {
 	console.log("New connection");
@@ -40,29 +40,24 @@ wsServer.on("connection", (socket) => {
 		}
 	});
 
+	socket.on("random_group", () => {
+		// 기존 큐에 세명 존재할 경우
+		if (groupMatchingQ.length >= 3) {
+			const clients = [socket, ...groupMatchingQ.splice(0, 3)];
 
-	socket.on("random_four_people", () => {
-		// 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
-		// 1이상일 경우 큐에서 하나 뽑아서 씁니다.
+			// 방이름은 소켓 id 조합하여 생성
+			const roomName =
+				clients[0].id + clients[1].id + clients[2].id + clients[3].id;
 
-		
-		fourPeopleMatchingQ.push(socket)
-		if(){} 
-			const matchedSocket = fourPeopleMatchingQ.shift();
-			const roomName = matchedSocket.id + socket.id;
-
-			socket.join(roomName);
-			matchedSocket.join(roomName);
-
-			// console.log(`${socket.id} and ${matchedSocket.id} are matched`);
-			wsServer.to(roomName).emit("matched", roomName);
+			for (let i = 0; i < clients.length; i++) {
+				clients[i].join(roomName);
+				clients[i].emit("random_group_matched", roomName, i); // i는 role 설정을 위하여 전송
+			}
+		} else {
+			// 세명 안되면 그냥 push
+			groupMatchingQ.push(socket);
 		}
-
-
-
 	});
-	
-
 
 	socket.on("discon", (roomName) => {
 		if (roomName !== undefined) {
