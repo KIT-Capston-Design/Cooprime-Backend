@@ -63,7 +63,6 @@ wsServer.on("connection", (socket) => {
 		if (roomName !== undefined) {
 			wsServer.in(roomName).disconnectSockets(true);
 			oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
-		} else {
 		}
 	});
 
