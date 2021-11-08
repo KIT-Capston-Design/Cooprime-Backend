@@ -15,6 +15,7 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer, { cors: { origin: "*" } });
 
 const oneToOneMatchingQ = [];
+const fourPeopleMatchingQ = [];
 
 wsServer.on("connection", (socket) => {
 	console.log("New connection");
@@ -38,6 +39,30 @@ wsServer.on("connection", (socket) => {
 			wsServer.to(roomName).emit("matched", roomName);
 		}
 	});
+
+
+	socket.on("random_four_people", () => {
+		// 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
+		// 1이상일 경우 큐에서 하나 뽑아서 씁니다.
+
+		
+		fourPeopleMatchingQ.push(socket)
+		if(){} 
+			const matchedSocket = fourPeopleMatchingQ.shift();
+			const roomName = matchedSocket.id + socket.id;
+
+			socket.join(roomName);
+			matchedSocket.join(roomName);
+
+			// console.log(`${socket.id} and ${matchedSocket.id} are matched`);
+			wsServer.to(roomName).emit("matched", roomName);
+		}
+
+
+
+	});
+	
+
 
 	socket.on("discon", (roomName) => {
 		if (roomName !== undefined) {
