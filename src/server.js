@@ -55,6 +55,8 @@ wsServer.on("connection", (socket) => {
 				clients[i].join(roomName);
 				clients[i].emit("random_group_matched", roomName, i); // i는 role 설정을 위하여 전송
 			}
+
+			clients.forEach((client) => client.groupChatMyRoleNum);
 		} else {
 			// 세명 안되면 그냥 push
 			groupMatchingQ.push(socket);
@@ -64,7 +66,8 @@ wsServer.on("connection", (socket) => {
 	socket.on("discon", (roomName) => {
 		if (roomName !== undefined) {
 			wsServer.in(roomName).disconnectSockets(true);
-			oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+			//oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+			groupMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
 		}
 	});
 
@@ -74,6 +77,7 @@ wsServer.on("connection", (socket) => {
 	});
 
 	socket.on("offer", (offer, roomName, roleNum) => {
+		//console.log(socket.groupChatMyRoleNum, roleNum);
 		if (roleNum === undefined) {
 			socket.to(roomName).emit("offer", offer);
 		} else {
@@ -86,6 +90,7 @@ wsServer.on("connection", (socket) => {
 	});
 
 	socket.on("answer", (answer, roomName, roleNum) => {
+		//console.log(socket.groupChatMyRoleNum, roleNum);
 		if (roleNum === undefined) {
 			socket.to(roomName).emit("answer", answer);
 		} else {
@@ -98,9 +103,12 @@ wsServer.on("connection", (socket) => {
 	});
 
 	socket.on("ice", (ice, roomName, roleNum) => {
+		//console.log(socket.groupChatMyRoleNum, roleNum);
 		if (roleNum === undefined) {
 			socket.to(roomName).emit("ice", ice);
+			//console.log("roleNum is undefined");
 		} else {
+			//console.log(socket.groupChatMyRoleNum);
 			socket.groupChatClients[roleNum].emit(
 				"ice",
 				ice,
