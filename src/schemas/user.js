@@ -4,17 +4,16 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
     USER_ID : {
         type : String,
-        required = true,
-        unique = true
+        required : true,
+        unique : true
     },
     PHONE_NUM : {
         type : Number,
-        required = true,
-        unique = true 
+        required : true
     },
     PASSWORD : {
         type : String,
-        required = true
+        required : true
     },
     INTRODUCTION : {
         type : String
@@ -24,11 +23,11 @@ const userSchema = new Schema({
     },
     NAME : {
         type : String,
-        required = true
+        required : true
     },
     REGISTER_DATE : {
-        type = Date,
-        required = true,
+        type : Date,
+        required : true,
         default : Date.now
     },
     WITHDRAW_DATE : {

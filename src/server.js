@@ -14,12 +14,14 @@ const app = express();
 
 connect();
 
+app.get("/")
+
 app.set("views", __dirname + "/views");
 
 app.use("/public", express.static(__dirname + "/public"));
 // app.get("/", (req, res) => res.render("home"));
-
-
+console.log(app);
+                         
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer, { cors: { origin: "*" } });
 
