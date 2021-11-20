@@ -1,17 +1,29 @@
 import express from "express";
 import http from "http";
 import SocketIO from "socket.io";
+const mongoose = require("mongoose");
+const cors = require("cors");
 
 const chatRoomRouter = require("./routes/chatroom");
 const userRouter = require("./routes/user");
-
 const app = express();
+require("dotenv").config(); // 환경변수 초기화
 
 app.set("views", __dirname + "/views");
-
+app.use(cors());
+app.use(express.json());
 app.use("/public", express.static(__dirname + "/public"));
 app.use("/api/chatroom", chatRoomRouter);
 app.use("/api/user", userRouter);
+
+// CONNECT TO MONGODB SERVER
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Successfully connected to mongodb"))
+  .catch((e) => console.error(e));
 
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer, { cors: { origin: "*" } });
@@ -65,4 +77,4 @@ wsServer.on("connection", (socket) => {
 });
 
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
-httpServer.listen(3000, handleListen);
+httpServer.listen(process.env.PORT, handleListen);

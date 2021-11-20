@@ -1,4 +1,6 @@
-function sendMessage(phone) {
+const randomNumberGenerator = require("../../controllers/user/randomNumberGenerator");
+
+function sendMessage(phone, authNumber) {
   // 전화 번호
   const userPhoneNumber = phone;
 
@@ -34,6 +36,7 @@ function sendMessage(phone) {
   hmac.update(accessKey);
   const hash = hmac.finalize();
   const signature = hash.toString(CryptoJS.enc.Base64);
+  console.log("authNum", authNumber);
 
   axios({
     method: method,
@@ -51,7 +54,7 @@ function sendMessage(phone) {
       countryCode: "82",
       from: my_number,
       // 원하는 메세지 내용
-      content: `안녕하세여`,
+      content: `[서로소] 인증번호 [${authNumber}]를 입력해주세요.`,
       messages: [
         // 신청자의 전화번호
         { to: `${userPhoneNumber}` },

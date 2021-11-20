@@ -1,0 +1,28 @@
+const mongoose = require("mongoose");
+
+// Define Schemes
+const userSchema = new mongoose.Schema({
+  phone_num: {
+    type: String,
+    required: true,
+  },
+  introduction: {
+    type: String,
+  },
+  profile_img: {
+    type: String,
+  },
+  nickname: {
+    type: String,
+  },
+  register_date: {
+    type: Date,
+    required: true,
+    default: Date.now,
+  },
+  tags: {
+    type: [String],
+  },
+});
+
+module.exports = mongoose.model("User", userSchema);
