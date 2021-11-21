@@ -1,5 +1,3 @@
-const randomNumberGenerator = require("../../controllers/user/randomNumberGenerator");
-
 function sendMessage(phone, authNumber) {
   // 전화 번호
   const userPhoneNumber = phone;

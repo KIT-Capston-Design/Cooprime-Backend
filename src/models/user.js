@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   phone_num: {
     type: String,
     required: true,
+    unique: true,
   },
   introduction: {
     type: String,
@@ -24,5 +25,10 @@ const userSchema = new mongoose.Schema({
     type: [String],
   },
 });
+
+// Find One by todoid
+userSchema.statics.findOneByPhoneNumber = function (phone_number) {
+  return this.findOne({ phone_number });
+};
 
 module.exports = mongoose.model("User", userSchema);

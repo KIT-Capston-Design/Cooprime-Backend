@@ -1,19 +1,22 @@
 import express from "express";
 import http from "http";
 import SocketIO from "socket.io";
+require("dotenv").config(); // 환경변수 초기화
+
 const mongoose = require("mongoose");
 const cors = require("cors");
-
 const chatRoomRouter = require("./routes/chatroom");
 const userRouter = require("./routes/user");
+const authJwt = require("./middleware/auth").checkToken;
 const app = express();
-require("dotenv").config(); // 환경변수 초기화
 
 app.set("views", __dirname + "/views");
 app.use(cors());
 app.use(express.json());
 app.use("/public", express.static(__dirname + "/public"));
+
 app.use("/api/chatroom", chatRoomRouter);
+app.get("/test", authJwt);
 app.use("/api/user", userRouter);
 
 // CONNECT TO MONGODB SERVER
