@@ -20,7 +20,6 @@ const authUtil = {
     if (user.idx === undefined)
       return res.send({ status: "fail4", msg: "jwt 인증 실패" });
     req.idx = user.idx;
-    res.send({ status: "sdfsdf" });
     next();
   },
 };
