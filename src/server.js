@@ -1,6 +1,8 @@
 import express from "express";
 import http from "http";
 import SocketIO from "socket.io";
+import { client, set, get, zadd, zrangebyscore} from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
+
 require("dotenv").config(); // 환경변수 초기화
 
 const mongoose = require("mongoose");
@@ -38,6 +40,47 @@ wsServer.on("connection", (socket) => {
   console.log("New connection");
 
   socket.onAny((event) => console.log(event));
+
+
+
+
+
+
+
+
+
+
+
+  socket.on("ogc_room_create", (inf) => {
+    //inf : {userId, roomname, tags}
+    const roomInf = {roomId : socket.id+"0", roomName : inf.roomname, roomTags : inf.tags, };
+    zadd("ogcr", 1, roomInf);
+
+  });
+
+  socket.on("ogc_enter_room", (inf) => {
+    //inf : {userId, roomId}
+    //방 인원 확인하고, 갱신하고 입장
+    socket.
+    socket.to(roomSocketId).emit("ogc_new_face", {
+  });
+
+  
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
   socket.on("random_one_to_one", () => {
     // 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
