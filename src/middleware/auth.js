@@ -1,4 +1,4 @@
-const jwt = require("../modules/jwt");
+const jwt = require("../modules/jwt/jwt");
 const TOKEN_EXPIRED = -3;
 const TOKEN_INVALID = -2;
 

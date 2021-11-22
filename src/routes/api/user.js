@@ -1,13 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const sendMessage = require("../API/sens/sens");
-const randomNumberGenerator = require("../modules/util/randomNumberGenerator");
+const sendMessage = require("../../modules/sens/sens");
+const randomNumberGenerator = require("../../modules/util/randomNumberGenerator");
 const NodeCache = require("node-cache");
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
-const User = require("../models/user");
-const jwt = require("../modules/jwt");
+const User = require("../../models/user");
+const jwt = require("../../modules/jwt/jwt");
 
 router.post("/req/auth/msg", async (req, res, next) => {
+  console.log("POST /req/suth/msg");
   const { phone_number } = req.body;
   res.setHeader("Content-Type", "application/json");
 
