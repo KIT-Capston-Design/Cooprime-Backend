@@ -22,8 +22,6 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use("/public", express.static(__dirname + "/public"));
-const auth = require("./middleware/auth").checkToken;
-app.get("/test", auth);
 app.use("/", require("./routes/index")); // routing
 
 /*
