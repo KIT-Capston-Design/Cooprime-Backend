@@ -80,5 +80,9 @@ module.exports = {
 	srem: (key = "key", key2 = "") =>
 		new Promise((a, b) => client.srem(key, key2, resolvePromise(a, b))),
 	hset: (key = "key", values = []) =>
-	new Promise((a, b) => client.hmset(key, values, resolvePromise(a, b))),
+		new Promise((a, b) => client.hmset(key, values, resolvePromise(a, b))),
+	expire: (key = "key", value) =>
+		new Promise((a, b) => client.expire(key, value, resolvePromise(a, b))),
+	lrem: (key = "key", value) =>
+		new Promise((a, b) => client.lrem(key, value, resolvePromise(a, b))),
 };
