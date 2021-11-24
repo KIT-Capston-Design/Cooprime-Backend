@@ -4,10 +4,14 @@ import SocketIO from "socket.io";
 import {
 	client as redisClient,
 	auth as runRedisAuth,
+	flushdb,
+	hset,
+	lpush,
 	set,
 	get,
 	zadd,
 	zrangebyscore,
+	hgetall,
 } from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
 
 require("dotenv").config(); // 환경변수 초기화
@@ -48,14 +52,64 @@ const wsServer = SocketIO(httpServer, { cors: { origin: "*" } });
 const oneToOneMatchingQ = [];
 const groupMatchingQ = [];
 
+//// ogc 작업
+
+// 방 목록 구독 리스트 초기화
+wsServer.ogcRoomlistObservers = [];
+
+// 방 목록 기초데이터 삽입
+(() => {
+	flushdb();
+	hset("ogcr:a", [
+		"roomName",
+		"HELLO WORLD",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:a:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:a");
+
+	// 방 전체데이터 읽기
+	zrangebyscore("ogcrs", 1, 3);
+})();
+
+////
 wsServer.on("connection", (socket) => {
 	console.log("New connection");
 
-	socket.onAny((event) => console.log(event));
+	socket.onAny((event) => console.log("receive", event));
 
-	socket.on("ogc_observe_roomlist", () => {
-		console.log("ogc_observe_roomlist");
+	//// ogc 작업
+
+	socket.on("ogc_observe_roomlist", async () => {
+		// 해당 클라이언트의 소켓을 방 목록 구독 리스트에 추가
+		wsServer.ogcRoomlistObservers.push(socket);
+		roomListPush();
 	});
+
+	const roomListPush = async () => {
+		let idList;
+		let roomInfList = [];
+
+		//인원수 1~3명 방 아이디 리스트 조회
+		idList = await zrangebyscore("ogcrs", 1, 3);
+
+		//아이디 리스트로 방 정보 조회
+		for (let i = 0; i < idList.length; i += 2) {
+			await hgetall(idList[i]).then((roomInf) => {
+				roomInfList.push({
+					roomId: idList[i],
+					roomName: roomInf.roomName,
+					tags: roomInf.tags,
+					cnt: idList[i + 1],
+				});
+			});
+		}
+
+		//방 정보 리스트 전송
+		socket.emit("ogc_roomlist", JSON.stringify(roomInfList));
+		console.log("emit ogc_roomlist");
+	};
 
 	// socket.on("ogc_room_create", (inf) => {
 	// 	//inf : {userId, roomname, tags}
@@ -72,6 +126,8 @@ wsServer.on("connection", (socket) => {
 	// 	//방 인원 확인하고, 갱신하고 입장
 	// 	socket.socket.to(roomSocketId).emit("ogc_new_face", {});
 	// }
+
+	//// \ogc 작업
 
 	socket.on("random_one_to_one", () => {
 		// 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.

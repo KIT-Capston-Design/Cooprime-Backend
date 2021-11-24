@@ -65,7 +65,7 @@ module.exports = {
 		new Promise((a, b) => client.hgetall(key, resolvePromise(a, b))),
 	zrangebyscore: (key = "key", min = 0, max = 1) =>
 		new Promise((a, b) =>
-			client.zrangebyscore(key, min, max, resolvePromise(a, b))
+			client.zrangebyscore(key, min, max, "WITHSCORES", resolvePromise(a, b))
 		),
 	zadd: (key = "key", key2 = "", value) =>
 		new Promise((a, b) => client.zadd(key, key2, value, resolvePromise(a, b))),
@@ -80,9 +80,14 @@ module.exports = {
 	srem: (key = "key", key2 = "") =>
 		new Promise((a, b) => client.srem(key, key2, resolvePromise(a, b))),
 	hset: (key = "key", values = []) =>
-		new Promise((a, b) => client.hmset(key, values, resolvePromise(a, b))),
+		new Promise((a, b) => client.hset(key, values, resolvePromise(a, b))),
 	expire: (key = "key", value) =>
 		new Promise((a, b) => client.expire(key, value, resolvePromise(a, b))),
 	lrem: (key = "key", value) =>
 		new Promise((a, b) => client.lrem(key, value, resolvePromise(a, b))),
+	flushdb: () => new Promise((a, b) => client.flushdb(resolvePromise(a, b))),
+	lpush: (key = "key", value) =>
+		new Promise((a, b) => client.lpush(key, value, resolvePromise(a, b))),
+	hgetall: (key = "key") =>
+		new Promise((a, b) => client.hgetall(key, resolvePromise(a, b))),
 };
