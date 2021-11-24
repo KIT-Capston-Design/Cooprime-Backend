@@ -108,6 +108,9 @@ wsServer.on("connection", (socket) => {
 			console.log("방 입장 isSucc(false)");
 			isSucc(false);
 		}
+
+		// 나주웅에 옵저버 리스트에서 제거 코드 추가 필요
+		roomListPush();
 	});
 	socket.on("ogc_observe_roomlist", async () => {
 		// 해당 클라이언트의 소켓을 방 목록 구독 리스트에 추가
