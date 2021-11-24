@@ -132,7 +132,7 @@ wsServer.on("connection", (socket) => {
 				roomInfList.push({
 					roomId: idList[i],
 					roomName: roomInf.roomName,
-					tags: roomInf.tags,
+					tags: JSON.parse(roomInf.tags),
 					cnt: idList[i + 1],
 				});
 			});
