@@ -77,10 +77,32 @@ wsServer.ogcRoomlistObservers = [];
 wsServer.on("connection", (socket) => {
 	console.log("New connection");
 
+	//// user id 어떻게 구해야 할지 몰라서 더미데이터 저장
+	socket.userId = "01012345678";
+
 	socket.onAny((event) => console.log("receive", event));
 
 	//// ogc 작업
+	socket.on("ogc_enter_room", (roomId, isSucc) => {
+		roomCnt = zscore("ogcrs", roomId);
 
+		if (roomCnt < 4) {
+			//방 인원 갱신
+			zadd("ogcrs", roomCnt + 1, roomId);
+
+			//방 유저 리스트에 해당 유저 추가
+			lpush(`${roomId}:userlist`, socket.userId);
+
+			// 방 입장
+			socket.join(roomId);
+			socket.to(roomId).emit("ogc_welcome", socket.id, socket.user.Id);
+
+			isSucc(true);
+		} else {
+			/*예외 : 방 인원초과*/
+			isSucc(false);
+		}
+	});
 	socket.on("ogc_observe_roomlist", async () => {
 		// 해당 클라이언트의 소켓을 방 목록 구독 리스트에 추가
 		wsServer.ogcRoomlistObservers.push(socket);

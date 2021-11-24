@@ -90,4 +90,6 @@ module.exports = {
 		new Promise((a, b) => client.lpush(key, value, resolvePromise(a, b))),
 	hgetall: (key = "key") =>
 		new Promise((a, b) => client.hgetall(key, resolvePromise(a, b))),
+	zscore: (key = "key", key2 = "") =>
+		new Promise((a, b) => client.zscore(key, key2, resolvePromise(a, b))),
 };
