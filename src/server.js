@@ -121,6 +121,7 @@ wsServer.on("connection", (socket) => {
 
 		//인원수 1~3명 방 아이디 리스트 조회
 		idList = await zrangebyscore("ogcrs", 1, 3);
+		console.log("idList", idList);
 
 		//아이디 리스트로 방 정보 조회
 		for (let i = 0; i < idList.length; i += 2) {
@@ -138,6 +139,29 @@ wsServer.on("connection", (socket) => {
 		socket.emit("ogc_roomlist", JSON.stringify(roomInfList));
 		console.log("emit ogc_roomlist");
 	};
+
+	socket.on("ogc_room_create", (roomInf, done) => {
+		roomInf = JSON.parse(roomInf);
+
+		console.log(roomInf);
+
+		// 방 정보 레디스 게시
+		hset(`ogcr:${socket.id}`, [
+			"roomName",
+			roomInf.roomName,
+			"tags",
+			JSON.stringify(roomInf.tags),
+		]);
+		lpush(`ogcr:${socket.id}:userlist`, socket.userId);
+		zadd("ogcrs", 1, `ogcr:${socket.id}`);
+
+		// 방 입장
+		socket.join(`ogcr:${socket.id}`);
+
+		done(`ogcr:${socket.id}`);
+
+		roomListPush();
+	});
 
 	// socket.on("ogc_room_create", (inf) => {
 	// 	//inf : {userId, roomname, tags}
