@@ -12,6 +12,7 @@ import {
 	zadd,
 	zrangebyscore,
 	hgetall,
+	zscore,
 } from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
 
 require("dotenv").config(); // 환경변수 초기화
@@ -83,23 +84,28 @@ wsServer.on("connection", (socket) => {
 	socket.onAny((event) => console.log("receive", event));
 
 	//// ogc 작업
-	socket.on("ogc_enter_room", (roomId, isSucc) => {
-		roomCnt = zscore("ogcrs", roomId);
+	socket.on("ogc_enter_room", async (roomId, isSucc) => {
+		//방 인원 조회
+		let roomCnt = (await zscore("ogcrs", roomId)) * 1;
 
+		// 4명 미만이면 방 입장 가능
 		if (roomCnt < 4) {
+			// 방 입장
 			//방 인원 갱신
-			zadd("ogcrs", roomCnt + 1, roomId);
+			zadd("ogcrs", roomCnt * 1 + 1, roomId);
 
 			//방 유저 리스트에 해당 유저 추가
 			lpush(`${roomId}:userlist`, socket.userId);
 
 			// 방 입장
 			socket.join(roomId);
-			socket.to(roomId).emit("ogc_welcome", socket.id, socket.user.Id);
+			socket.to(roomId).emit("ogc_welcome", socket.id, socket.userId);
 
+			console.log("방 입장 isSucc(true)");
 			isSucc(true);
 		} else {
 			/*예외 : 방 인원초과*/
+			console.log("방 입장 isSucc(false)");
 			isSucc(false);
 		}
 	});
