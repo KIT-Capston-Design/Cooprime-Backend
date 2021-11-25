@@ -15,6 +15,7 @@ import {
 	zrangebyscore,
 	hgetall,
 	zscore,
+	zrem,
 } from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
 
 require("dotenv").config(); // 환경변수 초기화
@@ -177,12 +178,21 @@ wsServer.on("connection", (socket) => {
 		roomListPush();
 	});
 
-	socket.on("ogc_exit_room", (roomName) => {
+	socket.on("ogc_exit_room", async (roomId) => {
 		// 다른 유저들한테 이 유저의 퇴장을 알림
-		socket.to(roomName).emit("ogc_user_leaves", socket.id);
+		socket.to(roomId).emit("ogc_user_leaves", socket.id);
+
+		let roomCnt = (await zscore("ogcrs", roomId)) * 1;
+
+		// 4명 미만이면 방 입장 가능
+		if (1 < roomCnt) {
+			zadd("ogcrs", roomCnt * 1 - 1, roomId);
+		} else {
+			zrem("ogcrs", roomId);
+		}
 
 		// 이 유저는 방을 나감.
-		socket.leave(roomName);
+		socket.leave(roomId);
 	});
 
 	// socket.on("ogc_room_create", (inf) => {

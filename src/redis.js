@@ -90,4 +90,6 @@ module.exports = {
 		new Promise((a, b) => client.hgetall(key, resolvePromise(a, b))),
 	zscore: (key = "key", key2 = "") =>
 		new Promise((a, b) => client.zscore(key, key2, resolvePromise(a, b))),
+	zrem: (key = "key", key2 = "") =>
+		new Promise((a, b) => client.zrem(key, key2, resolvePromise(a, b))),
 };
