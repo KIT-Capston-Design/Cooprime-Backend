@@ -59,20 +59,20 @@ const groupMatchingQ = [];
 
 //// ogc 작업
 
-// 방 목록 구독 리스트 초기화
-wsServer.ogcRoomlistObservers = [];
-
 // 방 목록 기초데이터 삽입
 (() => {
 	flushdb();
-	hset("ogcr:a", [
-		"roomName",
-		"HELLO WORLD",
-		"tags",
-		JSON.stringify(["tag1", "tag2"]),
-	]);
+	hset("ogcr:a", ["roomName", "AAA", "tags", JSON.stringify(["tag1", "tag2"])]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:a");
+
+	hset("ogcr:b", ["roomName", "BBB", "tags", JSON.stringify(["tag1", "tag2"])]);
+	lpush("ogcr:a:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:b");
+
+	hset("ogcr:c", ["roomName", "CCC", "tags", JSON.stringify(["tag1", "tag2"])]);
+	lpush("ogcr:a:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:c");
 
 	// 방 전체데이터 읽기
 	zrangebyscore("ogcrs", 1, 3);
@@ -88,6 +88,11 @@ wsServer.on("connection", (socket) => {
 	socket.onAny((event) => console.log("receive", event));
 
 	//// ogc 작업
+
+	socket.on("ogc_unobserve_roomlist", () => {
+		socket.leave("ogc_roomList_observers");
+	});
+
 	socket.on("ogc_enter_room", async (roomId, isSucc) => {
 		//방 인원 조회
 		let numOfUser = (await zscore("ogcrs", roomId)) * 1;
@@ -103,7 +108,8 @@ wsServer.on("connection", (socket) => {
 
 			// 방 입장
 			socket.join(roomId);
-			socket.to(roomId).emit("ogc_welcome", socket.userId);
+			// 나중에 userId로 변경 필요
+			socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
 
 			console.log("방 입장 isSucc(true)");
 			isSucc(roomId, numOfUser);
@@ -113,17 +119,23 @@ wsServer.on("connection", (socket) => {
 			isSucc(false);
 		}
 
-		// 나주웅에 옵저버 리스트에서 제거 코드 추가 필요
-		roomListPush();
-	});
-	socket.on("ogc_observe_roomlist", async () => {
-		// 해당 클라이언트의 소켓을 방 목록 구독 리스트에 추가
-		wsServer.ogcRoomlistObservers.push(socket);
-		roomListPush();
+		pushRoomList();
 	});
 
-	const roomListPush = async () => {
-		/* 클라이언트에 갱신된 방 리스트 정보를 push */
+	socket.on("ogc_observe_roomlist", async () => {
+		observeRoomList();
+	});
+
+	const observeRoomList = () => {
+		// 해당 클라이언트의 소켓을 방 목록 구독 리스트에 추가
+		socket.join("ogc_roomList_observers");
+
+		getRoomList().then((roomList) => {
+			socket.emit("ogc_roomlist", roomList);
+		});
+	};
+
+	const getRoomList = async () => {
 		let idList;
 		let roomInfList = [];
 
@@ -142,9 +154,17 @@ wsServer.on("connection", (socket) => {
 				});
 			});
 		}
+		return roomInfList;
+	};
+	const pushRoomList = async () => {
+		/* 방 목록 구독 중인 클라이언트들에 갱신된 방 리스트 정보를 push */
 
 		//방 정보 리스트 전송
-		socket.emit("ogc_roomlist", JSON.stringify(roomInfList));
+
+		getRoomList().then((roomList) => {
+			socket.to("ogc_roomList_observers").emit("ogc_roomlist", roomList);
+		});
+
 		console.log("emit ogc_roomlist");
 	};
 
@@ -178,14 +198,15 @@ wsServer.on("connection", (socket) => {
 
 		done(roomId);
 
-		roomListPush();
+		pushRoomList();
 	});
 
 	socket.on("ogc_exit_room", async (roomId) => {
-		// 다른 유저들한테 이 유저의 퇴장을 알림
-		socket.to(roomId).emit("ogc_user_leaves", socket.id);
-
 		let numOfUser = (await zscore("ogcrs", roomId)) * 1;
+
+		// 다른 유저들한테 이 유저의 퇴장을 알림
+		socket.to(roomId).emit("ogc_user_leaves", socket.id, numOfUser);
+
 		// 1명이면 방 삭제
 		if (1 < numOfUser) {
 			zadd("ogcrs", numOfUser * 1 - 1, roomId);
@@ -196,6 +217,8 @@ wsServer.on("connection", (socket) => {
 
 		// 이 유저는 방을 나감.
 		socket.leave(roomId);
+		observeRoomList();
+		pushRoomList();
 	});
 
 	// socket.on("ogc_room_create", (inf) => {
