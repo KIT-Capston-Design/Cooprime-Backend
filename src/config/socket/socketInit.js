@@ -10,7 +10,7 @@ module.exports = (wsServer) => {
     socket.on("random_one_to_one", () => {
       // 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
       // 1이상일 경우 큐에서 하나 뽑아서 씁니다.
-
+      console.log(oneToOneMatchingQ);
       if (oneToOneMatchingQ.length === 0) {
         oneToOneMatchingQ.push(socket);
       } else {
@@ -48,11 +48,17 @@ module.exports = (wsServer) => {
       }
     });
 
-    socket.on("discon", (roomName) => {
+    socket.on("discon_onetoone", (roomName) => {
       if (roomName !== undefined) {
         wsServer.in(roomName).disconnectSockets(true);
-        //oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
-        groupMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+        oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+      }
+    });
+
+    socket.on("discon_group", (roomName) => {
+      if (roomName !== undefined) {
+        wsServer.in(roomName).disconnectSockets(true);
+        groupMatchingQ.splice(groupMatchingQ.indexOf(socket), 1);
       }
     });
 
