@@ -1,12 +1,14 @@
 import express from "express";
 import http from "http";
 import SocketIO from "socket.io";
+import { exists } from "./models/user.js";
 import {
 	client as redisClient,
 	auth as runRedisAuth,
 	flushdb,
 	hset,
 	lpush,
+	exists as redisExists,
 	set,
 	get,
 	zadd,
@@ -102,7 +104,7 @@ wsServer.on("connection", (socket) => {
 			socket.to(roomId).emit("ogc_welcome", socket.id, socket.userId);
 
 			console.log("방 입장 isSucc(true)");
-			isSucc(true);
+			isSucc(roomId);
 		} else {
 			/*예외 : 방 인원초과*/
 			console.log("방 입장 isSucc(false)");
@@ -119,6 +121,7 @@ wsServer.on("connection", (socket) => {
 	});
 
 	const roomListPush = async () => {
+		/* 클라이언트에 갱신된 방 리스트 정보를 push */
 		let idList;
 		let roomInfList = [];
 
@@ -143,27 +146,43 @@ wsServer.on("connection", (socket) => {
 		console.log("emit ogc_roomlist");
 	};
 
-	socket.on("ogc_room_create", (roomInf, done) => {
+	socket.on("ogc_room_create", async (roomInf, done) => {
 		roomInf = JSON.parse(roomInf);
 
 		console.log(roomInf);
 
+		let roomId = `ogcr:${socket.id}`;
+		// 본인이 생성했던 방이 남아있다면 새 방의 ID는 뒤에 0을 붙인다.
+
+		while ((await redisExists(roomId)) * 1) {
+			console.log(roomId);
+			roomId = roomId + "0";
+		}
+
 		// 방 정보 레디스 게시
-		hset(`ogcr:${socket.id}`, [
+		hset(roomId, [
 			"roomName",
 			roomInf.roomName,
 			"tags",
 			JSON.stringify(roomInf.tags),
 		]);
-		lpush(`ogcr:${socket.id}:userlist`, socket.userId);
-		zadd("ogcrs", 1, `ogcr:${socket.id}`);
+		lpush(`${roomId}:userlist`, socket.userId);
+		zadd("ogcrs", 1, roomId);
 
 		// 방 입장
-		socket.join(`ogcr:${socket.id}`);
+		socket.join(roomId);
 
-		done(`ogcr:${socket.id}`);
+		done(roomId);
 
 		roomListPush();
+	});
+
+	socket.on("ogc_exit_room", (roomName) => {
+		// 다른 유저들한테 이 유저의 퇴장을 알림
+		socket.to(roomName).emit("ogc_user_leaves", socket.id);
+
+		// 이 유저는 방을 나감.
+		socket.leave(roomName);
 	});
 
 	// socket.on("ogc_room_create", (inf) => {

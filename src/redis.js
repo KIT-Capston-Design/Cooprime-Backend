@@ -51,8 +51,6 @@ module.exports = {
 		new Promise((a, b) => client.incr(key, resolvePromise(a, b))),
 	decr: (key = "key") =>
 		new Promise((a, b) => client.decr(key, resolvePromise(a, b))),
-	hmset: (key = "key", values = []) =>
-		new Promise((a, b) => client.hmset(key, values, resolvePromise(a, b))),
 	exists: (key = "key") =>
 		new Promise((a, b) => client.exists(key, resolvePromise(a, b))),
 	hexists: (key = "key", key2 = "") =>
