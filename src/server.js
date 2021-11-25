@@ -16,6 +16,7 @@ import {
 	hgetall,
 	zscore,
 	zrem,
+	expire,
 } from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
 
 require("dotenv").config(); // 환경변수 초기화
@@ -89,23 +90,23 @@ wsServer.on("connection", (socket) => {
 	//// ogc 작업
 	socket.on("ogc_enter_room", async (roomId, isSucc) => {
 		//방 인원 조회
-		let roomCnt = (await zscore("ogcrs", roomId)) * 1;
+		let numOfUser = (await zscore("ogcrs", roomId)) * 1;
 
 		// 4명 미만이면 방 입장 가능
-		if (roomCnt < 4) {
+		if (numOfUser < 4) {
 			// 방 입장
 			//방 인원 갱신
-			zadd("ogcrs", roomCnt * 1 + 1, roomId);
+			zadd("ogcrs", numOfUser * 1 + 1, roomId);
 
 			//방 유저 리스트에 해당 유저 추가
 			lpush(`${roomId}:userlist`, socket.userId);
 
 			// 방 입장
 			socket.join(roomId);
-			socket.to(roomId).emit("ogc_welcome", socket.id, socket.userId);
+			socket.to(roomId).emit("ogc_welcome", socket.userId);
 
 			console.log("방 입장 isSucc(true)");
-			isSucc(roomId);
+			isSucc(roomId, numOfUser);
 		} else {
 			/*예외 : 방 인원초과*/
 			console.log("방 입장 isSucc(false)");
@@ -170,6 +171,8 @@ wsServer.on("connection", (socket) => {
 		lpush(`${roomId}:userlist`, socket.userId);
 		zadd("ogcrs", 1, roomId);
 
+		expire(roomId, 43200);
+		expire(`${roomId}:userlist`, 43200);
 		// 방 입장
 		socket.join(roomId);
 
@@ -182,12 +185,12 @@ wsServer.on("connection", (socket) => {
 		// 다른 유저들한테 이 유저의 퇴장을 알림
 		socket.to(roomId).emit("ogc_user_leaves", socket.id);
 
-		let roomCnt = (await zscore("ogcrs", roomId)) * 1;
-
-		// 4명 미만이면 방 입장 가능
-		if (1 < roomCnt) {
-			zadd("ogcrs", roomCnt * 1 - 1, roomId);
+		let numOfUser = (await zscore("ogcrs", roomId)) * 1;
+		// 1명이면 방 삭제
+		if (1 < numOfUser) {
+			zadd("ogcrs", numOfUser * 1 - 1, roomId);
 		} else {
+			// 방 삭제
 			zrem("ogcrs", roomId);
 		}
 
