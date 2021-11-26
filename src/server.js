@@ -62,17 +62,59 @@ const groupMatchingQ = [];
 // 방 목록 기초데이터 삽입
 (() => {
 	flushdb();
-	hset("ogcr:a", ["roomName", "AAA", "tags", JSON.stringify(["tag1", "tag2"])]);
+	hset("ogcr:a", [
+		"roomName",
+		"TEST A",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:a");
 
-	hset("ogcr:b", ["roomName", "BBB", "tags", JSON.stringify(["tag1", "tag2"])]);
+	hset("ogcr:b", [
+		"roomName",
+		"TEST B",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:b");
 
-	hset("ogcr:c", ["roomName", "CCC", "tags", JSON.stringify(["tag1", "tag2"])]);
+	hset("ogcr:c", [
+		"roomName",
+		"TEST C",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:c");
+
+	hset("ogcr:d", [
+		"roomName",
+		"TEST D",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:a:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:d");
+
+	hset("ogcr:e", [
+		"roomName",
+		"TEST E",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:a:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:e");
+
+	hset("ogcr:f", [
+		"roomName",
+		"TEST F",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:a:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:f");
 
 	// 방 전체데이터 읽기
 	zrangebyscore("ogcrs", 1, 3);
@@ -88,6 +130,18 @@ wsServer.on("connection", (socket) => {
 	socket.onAny((event) => console.log("receive", event));
 
 	//// ogc 작업
+
+	socket.on("ogc_ice", (ice, userSocketId) => {
+		socket.to(userSocketId).emit("ogc_ice", ice, socket.id);
+	});
+
+	socket.on("ogc_offer", (offer, userSocketId) => {
+		socket.to(userSocketId).emit("ogc_offer", offer, socket.id);
+	});
+
+	socket.on("ogc_answer", (answer, userSocketId) => {
+		socket.to(userSocketId).emit("ogc_answer", answer, socket.id);
+	});
 
 	socket.on("ogc_unobserve_roomlist", () => {
 		socket.leave("ogc_roomList_observers");
@@ -109,7 +163,10 @@ wsServer.on("connection", (socket) => {
 			// 방 입장
 			socket.join(roomId);
 			// 나중에 userId로 변경 필요
-			socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
+
+			setTimeout(() => {
+				socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
+			}, 1000);
 
 			console.log("방 입장 isSucc(true)");
 			isSucc(roomId, numOfUser);
@@ -141,7 +198,6 @@ wsServer.on("connection", (socket) => {
 
 		//인원수 1~3명 방 아이디 리스트 조회
 		idList = await zrangebyscore("ogcrs", 1, 3);
-		console.log("idList", idList);
 
 		//아이디 리스트로 방 정보 조회
 		for (let i = 0; i < idList.length; i += 2) {
