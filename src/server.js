@@ -17,6 +17,7 @@ import {
 	zscore,
 	zrem,
 	expire,
+	time,
 } from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
 
 require("dotenv").config(); // 환경변수 초기화
@@ -64,12 +65,57 @@ const groupMatchingQ = [];
 	flushdb();
 	hset("ogcr:a", [
 		"roomName",
-		"TEST ROOM",
+		"TEST A",
 		"tags",
 		JSON.stringify(["tag1", "tag2"]),
 	]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:a");
+
+	hset("ogcr:b", [
+		"roomName",
+		"TEST B",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:b:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:b");
+
+	hset("ogcr:c", [
+		"roomName",
+		"TEST C",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:c:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:c");
+
+	hset("ogcr:d", [
+		"roomName",
+		"TEST D",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:d:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:d");
+
+	hset("ogcr:e", [
+		"roomName",
+		"TEST E",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:e:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:e");
+
+	hset("ogcr:f", [
+		"roomName",
+		"TEST F",
+		"tags",
+		JSON.stringify(["tag1", "tag2"]),
+	]);
+	lpush("ogcr:f:userlist", "01085762079");
+	zadd("ogcrs", 1, "ogcr:f");
 
 	// 방 전체데이터 읽기
 	zrangebyscore("ogcrs", 1, 3);
@@ -116,12 +162,17 @@ wsServer.on("connection", (socket) => {
 			lpush(`${roomId}:userlist`, socket.userId);
 
 			// 방 입장
+			console.log("emit ogc_user_joins");
 			socket.join(roomId);
+
+			await enterRoom(roomId, numOfUser);
+			// socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
 			// 나중에 userId로 변경 필요
 
-			setTimeout(() => {
-				socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
-			}, 1000);
+			// setTimeout(() => {
+			// 	console.log("emit ogc_user_joins");
+			// 	socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
+			// }, 1000);
 
 			console.log("방 입장 isSucc(true)");
 			isSucc(roomId, numOfUser);
@@ -133,6 +184,16 @@ wsServer.on("connection", (socket) => {
 
 		pushRoomList();
 	});
+
+	// 동시 접속 방지
+	const enterRoom = async (roomId, numOfUser) => {
+		if ((await time())[0] - (await hgetall(`${roomId}:time`)) <= 1) {
+			await enterRoom(roomId, numOfUser);
+		} else {
+			socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
+			hset(`${roomId}:time`, ["time", (await time())[0]]);
+		}
+	};
 
 	socket.on("ogc_observe_roomlist", async () => {
 		observeRoomList();
@@ -201,6 +262,9 @@ wsServer.on("connection", (socket) => {
 		]);
 		lpush(`${roomId}:userlist`, socket.userId);
 		zadd("ogcrs", 1, roomId);
+
+		//시간차 접속 위한
+		hset(`${roomId}:time`, ["time", (await time())[0]]);
 
 		expire(roomId, 43200);
 		expire(`${roomId}:userlist`, 43200);

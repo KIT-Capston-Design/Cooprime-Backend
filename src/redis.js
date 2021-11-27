@@ -92,4 +92,5 @@ module.exports = {
 		new Promise((a, b) => client.zscore(key, key2, resolvePromise(a, b))),
 	zrem: (key = "key", key2 = "") =>
 		new Promise((a, b) => client.zrem(key, key2, resolvePromise(a, b))),
+	time: () => new Promise((a, b) => client.time(resolvePromise(a, b))),
 };
