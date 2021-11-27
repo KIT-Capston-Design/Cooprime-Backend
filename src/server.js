@@ -64,57 +64,12 @@ const groupMatchingQ = [];
 	flushdb();
 	hset("ogcr:a", [
 		"roomName",
-		"TEST A",
+		"TEST ROOM",
 		"tags",
 		JSON.stringify(["tag1", "tag2"]),
 	]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:a");
-
-	hset("ogcr:b", [
-		"roomName",
-		"TEST B",
-		"tags",
-		JSON.stringify(["tag1", "tag2"]),
-	]);
-	lpush("ogcr:a:userlist", "01085762079");
-	zadd("ogcrs", 1, "ogcr:b");
-
-	hset("ogcr:c", [
-		"roomName",
-		"TEST C",
-		"tags",
-		JSON.stringify(["tag1", "tag2"]),
-	]);
-	lpush("ogcr:a:userlist", "01085762079");
-	zadd("ogcrs", 1, "ogcr:c");
-
-	hset("ogcr:d", [
-		"roomName",
-		"TEST D",
-		"tags",
-		JSON.stringify(["tag1", "tag2"]),
-	]);
-	lpush("ogcr:a:userlist", "01085762079");
-	zadd("ogcrs", 1, "ogcr:d");
-
-	hset("ogcr:e", [
-		"roomName",
-		"TEST E",
-		"tags",
-		JSON.stringify(["tag1", "tag2"]),
-	]);
-	lpush("ogcr:a:userlist", "01085762079");
-	zadd("ogcrs", 1, "ogcr:e");
-
-	hset("ogcr:f", [
-		"roomName",
-		"TEST F",
-		"tags",
-		JSON.stringify(["tag1", "tag2"]),
-	]);
-	lpush("ogcr:a:userlist", "01085762079");
-	zadd("ogcrs", 1, "ogcr:f");
 
 	// 방 전체데이터 읽기
 	zrangebyscore("ogcrs", 1, 3);
