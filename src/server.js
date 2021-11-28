@@ -25,8 +25,15 @@ const socketInit = require("./config/socket/socketInit");
 const httpServer = http.createServer(app);
 const cookieParser = require("cookie-parser");
 
+const mongoose = require("mongoose");
+const chatRoomRouter = require("./routes/api/chatroom");
+const userRouter = require("./routes/api/user");
+const authJwt = require("./middleware/auth").checkToken;
+
 const SocketIO = require("socket.io");
 const wsServer = SocketIO(httpServer, { cors: { origin: "*" } }); // WebSocket Server
+
+app.set("views", __dirname + "/views");
 
 require("dotenv").config(); // 환경변수 초기화
 
