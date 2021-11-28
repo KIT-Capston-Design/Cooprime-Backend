@@ -60,8 +60,12 @@ const groupMatchingQ = [];
 
 //// ogc 작업
 
+// ogc 방 입장 동시접속 방지 위한 스핀락 객체
+// 이 객체 안에 룸이름으로 프로퍼티가 생성되어 스핀락 state를 나타낸다.
+const spinlock = {};
+
 // 방 목록 기초데이터 삽입
-(() => {
+(async () => {
 	flushdb();
 	hset("ogcr:a", [
 		"roomName",
@@ -71,7 +75,19 @@ const groupMatchingQ = [];
 	]);
 	lpush("ogcr:a:userlist", "01085762079");
 	zadd("ogcrs", 1, "ogcr:a");
-
+	//시간차 접속 위한
+	hset("ogcr:a:time", ["time", Number((await time())[0])]);
+	hset("ogcr:b:time", ["time", Number((await time())[0])]);
+	hset("ogcr:c:time", ["time", Number((await time())[0])]);
+	hset("ogcr:d:time", ["time", Number((await time())[0])]);
+	hset("ogcr:e:time", ["time", Number((await time())[0])]);
+	hset("ogcr:f:time", ["time", Number((await time())[0])]);
+	spinlock["ogcr:a"] = false;
+	spinlock["ogcr:b"] = false;
+	spinlock["ogcr:c"] = false;
+	spinlock["ogcr:d"] = false;
+	spinlock["ogcr:e"] = false;
+	spinlock["ogcr:f"] = false;
 	hset("ogcr:b", [
 		"roomName",
 		"TEST B",
@@ -162,7 +178,7 @@ wsServer.on("connection", (socket) => {
 			lpush(`${roomId}:userlist`, socket.userId);
 
 			// 방 입장
-			console.log("emit ogc_user_joins");
+
 			socket.join(roomId);
 
 			await enterRoom(roomId, numOfUser);
@@ -185,13 +201,48 @@ wsServer.on("connection", (socket) => {
 		pushRoomList();
 	});
 
+	const getUnixTimeSec = () => Math.floor(Date.now() / 1000); //유닉스 초 단위 시각이다.
+	const sleep = (t) => {
+		return new Promise((resolve) => setTimeout(resolve, t));
+	};
+
 	// 동시 접속 방지
 	const enterRoom = async (roomId, numOfUser) => {
-		if ((await time())[0] - (await hgetall(`${roomId}:time`)) <= 1) {
-			await enterRoom(roomId, numOfUser);
+		console.log("enterRoom()");
+		let lastTime;
+
+		// 스핀락을 사용하여 동일한 시각을 가져오는 것을 방지
+		// await hgetall() 에서 대기하고 있을 때, 다른 동일 방 enterRoom() 코드가
+		// 실행 될 수 있는데 이 때 spinlock이 true일 것이므로 500ms sleep하게 된다.
+		// 이를 통해 동시 접속 방지를 위한 마지막 입장 시각을 가져올 때 동일한
+		// 마지막 접속 시각을 가져오는 것을 방지한다.
+		while (spinlock[roomId] === true) {
+			console.log("---------------------spinlock---------------------");
+			await sleep(500);
+		}
+
+		console.log("spinlock true");
+		spinlock[roomId] = true;
+		lastTime = Number((await hgetall(`${roomId}:time`)).time);
+		console.log("spinlock false");
+		spinlock[roomId] = false;
+
+		const curTime = getUnixTimeSec();
+
+		const delta = curTime - lastTime;
+
+		console.log("delta", delta);
+
+		if (delta <= 1) {
+			setTimeout(() => {
+				enterRoom(roomId, numOfUser);
+			}, 1000);
 		} else {
+			hset(`${roomId}:time`, ["time", curTime]);
+			console.log("emit ogc_user_joins");
 			socket.to(roomId).emit("ogc_user_joins", socket.id, numOfUser);
-			hset(`${roomId}:time`, ["time", (await time())[0]]);
+
+			// hset("ogcr:d:time", ["time", Number((await time())[0])]);
 		}
 	};
 
@@ -261,10 +312,16 @@ wsServer.on("connection", (socket) => {
 			JSON.stringify(roomInf.tags),
 		]);
 		lpush(`${roomId}:userlist`, socket.userId);
-		zadd("ogcrs", 1, roomId);
+
+		setTimeout(() => {
+			zadd("ogcrs", 1, roomId);
+		}, 500);
+
+		// 스핀락 init
+		spinlock[roomId] = false;
 
 		//시간차 접속 위한
-		hset(`${roomId}:time`, ["time", (await time())[0]]);
+		hset(`${roomId}:time`, ["time", getUnixTimeSec()]);
 
 		expire(roomId, 43200);
 		expire(`${roomId}:userlist`, 43200);
@@ -288,6 +345,7 @@ wsServer.on("connection", (socket) => {
 		} else {
 			// 방 삭제
 			zrem("ogcrs", roomId);
+			delete spinlock[roomId];
 		}
 
 		// 이 유저는 방을 나감.
