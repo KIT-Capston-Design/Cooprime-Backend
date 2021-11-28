@@ -1,15 +1,17 @@
-const jwt = require("../modules/jwt");
+const jwt = require("../modules/jwt/jwt");
 const TOKEN_EXPIRED = -3;
 const TOKEN_INVALID = -2;
 
 const authUtil = {
   checkToken: async (req, res, next) => {
-    var token = req.headers.token;
+    let token = req.cookies.x_auth;
+
     console.log(token);
     // 토큰 없음
     if (!token) return res.send({ status: "fail1", msg: "jwt 인증 실패" });
     // decode
     const user = await jwt.verify(token);
+
     console.log(user);
     // 유효기간 만료
     if (user === TOKEN_EXPIRED)
