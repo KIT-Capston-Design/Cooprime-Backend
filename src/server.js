@@ -4,27 +4,10 @@ import SocketIO from "socket.io";
 import socketInit from "./config/socket/socketInit.js";
 import dbInit from "./config/db/dbInit";
 import { exists } from "./models/user.js";
-import {
-  client as redisClient,
-  auth as runRedisAuth,
-  flushdb,
-  hset,
-  lpush,
-  exists as redisExists,
-  set,
-  get,
-  zadd,
-  zrangebyscore,
-  hgetall,
-  zscore,
-  zrem,
-  expire,
-  sadd,
-} from "./redis.js"; // 사용 시 필요 연산 추가 import 필요
+import { flushdb, auth as runRedisAuth } from "./redis"; // 사용 시 필요 연산 추가 import 필요
 
 require("dotenv").config(); // 환경변수 초기화
 
-const mongoose = require("mongoose");
 const cors = require("cors");
 // const chatRoomRouter = require("./routes/chatroom");
 // const userRouter = require("./routes/user");
@@ -79,4 +62,4 @@ socketInit(wsServer);
 
 const handleListen = () =>
   console.log(`Listening on http://localhost:${process.env.PORT}`);
-httpServer.listen(process.env.PORT, handleListen);
+httpServer.listen(process.env.PORT || 3002, handleListen);

@@ -41,12 +41,12 @@ module.exports = (wsServer) => {
 
     socket.onAny((event) => console.log("receive", event));
 
-    socket.on("random_one_to_one", () => {
+    socket.on("random_one_to_one", (data) => {
       // socket 정보 서버에서 관리
       oneToOneMatchingQ.push(socket);
 
       // 입력 tag들
-      const tags = ["낚시", "바다"];
+      const tags = JSON.parse(data);
 
       // redis에 user set
       const userKey = `user:${socket.id}`;
