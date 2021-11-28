@@ -1,28 +1,61 @@
+import { set, get, sadd } from "../../redis"; // 사용 시 필요 연산 추가 import 필요
+require("dotenv").config();
+
+const redis = require("redis");
+
 const oneToOneMatchingQ = [];
 const groupMatchingQ = [];
 
+const subscriber = redis.createClient(6379, "KITCapstone.iptime.org", {
+  password: process.env.REDIS_PASSWORD || 8788,
+});
+
+subscriber.subscribe("random_matching");
+
 module.exports = (wsServer) => {
+  subscriber.on("message", async function (channel, message) {
+    const [firstSocketId, secondSocketId] = JSON.parse(message);
+
+    const firstSocket = oneToOneMatchingQ.find((value) => {
+      return value.id == firstSocketId;
+    });
+
+    const secondSocket = oneToOneMatchingQ.find((value) => {
+      return value.id == secondSocketId;
+    });
+
+    oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(firstSocket), 1);
+    oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(secondSocket), 1);
+
+    const roomName = firstSocketId + secondSocketId;
+
+    firstSocket.join(roomName);
+    secondSocket.join(roomName);
+
+    // console.log(`${socket.id} and ${matchedSocket.id} are matched`);
+    wsServer.to(roomName).emit("matched", roomName);
+  });
+
   wsServer.on("connection", (socket) => {
     console.log("New connection");
 
-    socket.onAny((event) => console.log(event));
+    socket.onAny((event) => console.log("receive", event));
 
     socket.on("random_one_to_one", () => {
-      // 큐 내부 원소가 0개 일 경우 그냥 큐에 넣습니다.
-      // 1이상일 경우 큐에서 하나 뽑아서 씁니다.
-      console.log(oneToOneMatchingQ);
-      if (oneToOneMatchingQ.length === 0) {
-        oneToOneMatchingQ.push(socket);
-      } else {
-        const matchedSocket = oneToOneMatchingQ.shift();
-        const roomName = matchedSocket.id + socket.id;
+      // socket 정보 서버에서 관리
+      oneToOneMatchingQ.push(socket);
 
-        socket.join(roomName);
-        matchedSocket.join(roomName);
+      // 입력 tag들
+      const tags = ["낚시", "바다"];
 
-        // console.log(`${socket.id} and ${matchedSocket.id} are matched`);
-        wsServer.to(roomName).emit("matched", roomName);
-      }
+      // redis에 user set
+      const userKey = `user:${socket.id}`;
+      set(userKey, socket.id);
+      console.log("insert", socket.id);
+
+      // tag set
+      const tagKey = `tag:${userKey}`;
+      sadd(tagKey, tags);
     });
 
     socket.on("random_group", () => {
