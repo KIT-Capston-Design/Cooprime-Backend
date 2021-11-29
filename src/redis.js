@@ -5,39 +5,39 @@ require("dotenv").config();
 const redis = require("redis");
 
 const endpoint =
-	process.env.REDIS_ENDPOINT_URL || "KITCapstone.iptime.org:6379";
+  process.env.REDIS_ENDPOINT_URL || "KITCapstone.iptime.org:6379";
 const password = process.env.REDIS_PASSWORD || 8788;
 
 const [host, port] = endpoint.split(":");
 
 const resolvePromise = (resolve, reject) => {
-	return (err, data) => {
-		if (err) {
-			reject(err);
-		}
-		resolve(data);
-	};
+  return (err, data) => {
+    if (err) {
+      reject(err);
+    }
+    resolve(data);
+  };
 };
 
 const auth = (client) =>
-	new Promise((a, b) => {
-		if (password === null) {
-			a(true);
-		} else {
-			client.auth(password, resolvePromise(a, b));
-		}
-	});
+  new Promise((a, b) => {
+    if (password === null) {
+      a(true);
+    } else {
+      client.auth(password, resolvePromise(a, b));
+    }
+  });
 
 const client = redis.createClient(+port, host);
 
 const sub = redis.createClient(
-	+port,
-	host,
-	password === null
-		? undefined
-		: {
-				password,
-		  }
+  +port,
+  host,
+  password === null
+    ? undefined
+    : {
+        password,
+      }
 );
 
 module.exports = {
