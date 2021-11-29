@@ -1,4 +1,22 @@
-import { set, get, sadd } from "../../redis"; // 사용 시 필요 연산 추가 import 필요
+const {
+  client: redisClient,
+  auth: runRedisAuth,
+  flushdb,
+  hset,
+  lpush,
+  exists,
+  set,
+  get,
+  zadd,
+  zrangebyscore,
+  hgetall,
+  zscore,
+  zrem,
+  expire,
+  time,
+  sadd,
+  exists: redisExists,
+} = require("../../redis");
 require("dotenv").config();
 
 const redis = require("redis");
@@ -89,12 +107,6 @@ module.exports = (wsServer) => {
         wsServer.in(roomName).disconnectSockets(true);
         oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
       }
-      socket.removeAllListeners("random_one_to_one");
-      socket.removeAllListeners("join_room");
-      socket.removeAllListeners("offer");
-      socket.removeAllListeners("answer");
-      socket.removeAllListeners("ice");
-      wsServer.removeAllListeners("connection");
     });
 
     socket.on("discon_group", (roomName) => {
@@ -155,80 +167,6 @@ module.exports = (wsServer) => {
     // ogc 방 입장 동시접속 방지 위한 스핀락 객체
     // 이 객체 안에 룸이름으로 프로퍼티가 생성되어 스핀락 state를 나타낸다.
     const spinlock = {};
-
-    // 방 목록 기초데이터 삽입
-    (async () => {
-      flushdb();
-      hset("ogcr:a", [
-        "roomName",
-        "TEST A",
-        "tags",
-        JSON.stringify(["tag1", "tag2"]),
-      ]);
-      lpush("ogcr:a:userlist", "01085762079");
-      zadd("ogcrs", 1, "ogcr:a");
-      //시간차 접속 위한
-      hset("ogcr:a:time", ["time", Number((await time())[0])]);
-      hset("ogcr:b:time", ["time", Number((await time())[0])]);
-      hset("ogcr:c:time", ["time", Number((await time())[0])]);
-      hset("ogcr:d:time", ["time", Number((await time())[0])]);
-      hset("ogcr:e:time", ["time", Number((await time())[0])]);
-      hset("ogcr:f:time", ["time", Number((await time())[0])]);
-      spinlock["ogcr:a"] = false;
-      spinlock["ogcr:b"] = false;
-      spinlock["ogcr:c"] = false;
-      spinlock["ogcr:d"] = false;
-      spinlock["ogcr:e"] = false;
-      spinlock["ogcr:f"] = false;
-      hset("ogcr:b", [
-        "roomName",
-        "TEST B",
-        "tags",
-        JSON.stringify(["tag1", "tag2"]),
-      ]);
-      lpush("ogcr:b:userlist", "01085762079");
-      zadd("ogcrs", 1, "ogcr:b");
-
-      hset("ogcr:c", [
-        "roomName",
-        "TEST C",
-        "tags",
-        JSON.stringify(["tag1", "tag2"]),
-      ]);
-      lpush("ogcr:c:userlist", "01085762079");
-      zadd("ogcrs", 1, "ogcr:c");
-
-      hset("ogcr:d", [
-        "roomName",
-        "TEST D",
-        "tags",
-        JSON.stringify(["tag1", "tag2"]),
-      ]);
-      lpush("ogcr:d:userlist", "01085762079");
-      zadd("ogcrs", 1, "ogcr:d");
-
-      hset("ogcr:e", [
-        "roomName",
-        "TEST E",
-        "tags",
-        JSON.stringify(["tag1", "tag2"]),
-      ]);
-      lpush("ogcr:e:userlist", "01085762079");
-      zadd("ogcrs", 1, "ogcr:e");
-
-      hset("ogcr:f", [
-        "roomName",
-        "TEST F",
-        "tags",
-        JSON.stringify(["tag1", "tag2"]),
-      ]);
-      lpush("ogcr:f:userlist", "01085762079");
-      zadd("ogcrs", 1, "ogcr:f");
-
-      // 방 전체데이터 읽기
-      zrangebyscore("ogcrs", 1, 3);
-    })();
-
 
     //// user id 어떻게 구해야 할지 몰라서 더미데이터 저장
     socket.userId = "01012345678";
@@ -440,7 +378,5 @@ module.exports = (wsServer) => {
       observeRoomList();
       pushRoomList();
     });
-  
   });
-
-}
+};

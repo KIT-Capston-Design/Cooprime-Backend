@@ -1,9 +1,6 @@
 require("dotenv").config(); // 환경변수 초기화
 
-const {
-	client: redisClient,
-	auth: runRedisAuth,
-} = require("./redis");
+const { client: redisClient, auth: runRedisAuth } = require("./redis");
 const express = require("express");
 const http = require("http");
 const app = express();
@@ -14,15 +11,11 @@ const httpServer = http.createServer(app);
 const cookieParser = require("cookie-parser");
 // const authJwt = require("./middleware/auth").checkToken;
 
+module.export = app;
+
 const SocketIO = require("socket.io");
 const wsServer = SocketIO(httpServer, { cors: { origin: "*" } }); // WebSocket Server
 
-
-
-const cors = require("cors");
-const app = express();
-
-app.set("views", __dirname + "/views");
 app.use(cors());
 app.use(cookieParser);
 app.use(express.json());
@@ -31,9 +24,8 @@ app.use("/", require("./routes/index")); // routing
 
 //Initialize
 (async () => {
-	await runRedisAuth();
+  await runRedisAuth();
 })();
-
 
 /*
   서버 설정? and 초기화
@@ -46,5 +38,5 @@ socketInit(wsServer);
 */
 
 const handleListen = () =>
-	console.log(`Listening on http://localhost:${process.env.PORT}`);
+  console.log(`Listening on http://localhost:${process.env.PORT}`);
 httpServer.listen(process.env.PORT, handleListen);
