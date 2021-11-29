@@ -48,6 +48,9 @@ module.exports = (wsServer) => {
       // 입력 tag들
       const tags = JSON.parse(data);
 
+      // tag
+      console.log("tags", tags);
+
       // redis에 user set
       const userKey = `user:${socket.id}`;
       set(userKey, socket.id);
@@ -68,7 +71,7 @@ module.exports = (wsServer) => {
           clients[0].id + clients[1].id + clients[2].id + clients[3].id;
 
         for (let i = 0; i < clients.length; i++) {
-          clients[i].groupChatMyRoleNum = i;
+          clients[i].groupChatMyRoleNum = ㄴi;
           clients[i].groupChatClients = clients;
           clients[i].join(roomName);
           clients[i].emit("random_group_matched", roomName, i); // i는 role 설정을 위하여 전송
@@ -86,6 +89,12 @@ module.exports = (wsServer) => {
         wsServer.in(roomName).disconnectSockets(true);
         oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
       }
+      socket.removeAllListeners("random_one_to_one");
+      socket.removeAllListeners("join_room");
+      socket.removeAllListeners("offer");
+      socket.removeAllListeners("answer");
+      socket.removeAllListeners("ice");
+      wsServer.removeAllListeners("connection");
     });
 
     socket.on("discon_group", (roomName) => {
