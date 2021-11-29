@@ -26,8 +26,8 @@ const httpServer = http.createServer(app);
 const cookieParser = require("cookie-parser");
 
 const mongoose = require("mongoose");
-const chatRoomRouter = require("./routes/api/chatroom");
-const userRouter = require("./routes/api/user");
+// const chatRoomRouter = require("./routes/api/chatroom");
+// const userRouter = require("./routes/api/user");
 const authJwt = require("./middleware/auth").checkToken;
 
 const SocketIO = require("socket.io");
@@ -47,23 +47,14 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use("/public", express.static(__dirname + "/public"));
-app.use("/api/chatroom", chatRoomRouter);
+// app.use("/api/chatroom", chatRoomRouter);
 app.get("/test", authJwt);
-app.use("/api/user", userRouter);
+// app.use("/api/user", userRouter);
 
 //Initialize
 (async () => {
 	await runRedisAuth();
 })();
-
-// CONNECT TO MONGODB SERVER
-mongoose
-	.connect(process.env.MONGO_URI, {
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
-	})
-	.then(() => console.log("Successfully connected to mongodb"))
-	.catch((e) => console.error(e));
 
 app.use("/", require("./routes/index")); // routing
 
