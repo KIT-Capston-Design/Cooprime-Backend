@@ -1,6 +1,6 @@
 require("dotenv").config(); // 환경변수 초기화
 
-const { client: redisClient, auth: runRedisAuth } = require("./redis");
+const { client: redisClient, auth: runRedisAuth, flushdb } = require("./redis");
 const dbInit = require("./config/db/dbInit");
 const socketInit = require("./config/socket/socketInit");
 
@@ -22,6 +22,7 @@ app.use("/", require("./routes/index")); // routing
 // Redis Initialize
 (async () => {
   await runRedisAuth();
+  flushdb();
 })();
 
 // // 서버 설정 and 초기화
