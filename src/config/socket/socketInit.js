@@ -104,6 +104,7 @@ module.exports = (wsServer) => {
 
 		socket.on("discon_onetoone", (roomName) => {
 			if (roomName !== undefined) {
+				socket.to(roomName).emit("discon_onetoone");
 				wsServer.in(roomName).disconnectSockets(true);
 				oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
 			}
