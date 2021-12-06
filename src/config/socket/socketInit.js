@@ -65,6 +65,7 @@ module.exports = (wsServer) => {
 
       // 입력 tag들
       const tags = JSON.parse(data);
+      tags.push("$");
 
       // tag
       console.log("tags", tags);
@@ -108,7 +109,9 @@ module.exports = (wsServer) => {
         wsServer.in(roomName).disconnectSockets(true);
       }
 
-      oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+      if (roomName === undefined) {
+        oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+      }
       const userKey = `user:${socket.id}`;
       redisClient.del(userKey);
       redisClient.del(`tag:${userKey}`);
