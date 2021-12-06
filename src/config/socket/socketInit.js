@@ -111,7 +111,7 @@ module.exports = (wsServer) => {
       oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
       const userKey = `user:${socket.id}`;
       redisClient.del(userKey);
-      srem(`tag:${userKey}`);
+      redisClient.del(`tag:${userKey}`);
     });
 
     socket.on("discon_group", (roomName) => {
