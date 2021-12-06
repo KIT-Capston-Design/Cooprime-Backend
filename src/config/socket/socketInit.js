@@ -107,12 +107,12 @@ module.exports = (wsServer) => {
         socket.to(roomName).emit("discon_onetoone");
         wsServer.in(roomName).disconnectSockets(true);
         oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
-      } else {
-        oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
-        const userKey = `user:${socket.id}`;
-        redisClient.del(`user:${socket.id}`);
-        srem(`tag:${userKey}`);
       }
+
+      oneToOneMatchingQ.splice(oneToOneMatchingQ.indexOf(socket), 1);
+      const userKey = `user:${socket.id}`;
+      redisClient.del(userKey);
+      srem(`tag:${userKey}`);
     });
 
     socket.on("discon_group", (roomName) => {
